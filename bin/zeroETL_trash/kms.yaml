@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  environment:
+    Type: String
+    Default: stage
+  product:
+    Type: String
+    Default: extv
+  service:
+    Type: String
+    Default: redshift
+Resources:
+  KMSKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: 'My KMS Key'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: 'key-consolepolicy-3'
+        Statement:
+          - Sid: 'Enable IAM User Permissions'
+            Effect: 'Allow'
+            Principal:
+              AWS: 'arn:aws:iam::095767269209:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: 'Allow access for Key Administrators'
+            Effect: 'Allow'
+            Principal:
+              AWS:
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c'
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b'
+            Action:
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:TagResource'
+              - 'kms:UntagResource'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          - Sid: 'Allow use of the key'
+            Effect: 'Allow'
+            Principal:
+              AWS:
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c'
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b'
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+          - Sid: 'Allow attachment of persistent resources'
+            Effect: 'Allow'
+            Principal:
+              AWS:
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c'
+                - 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b'
+            Action:
+              - 'kms:CreateGrant'
+              - 'kms:ListGrants'
+              - 'kms:RevokeGrant'
+            Resource: '*'
+            Condition:
+              Bool:
+                'kms:GrantIsForAWSResource': 'true'
+
+  MyKMSAlias:
+    Type: 'AWS::KMS::Alias'
+    Properties:
+      AliasName: !Sub "alias/${environment}-${product}-${service}-kmsKey"
+      # AliasName: 'alias/my-custom-kms-alias'
+      TargetKeyId: !Ref KMSKey
+
+Outputs:
+  KMSKeyName:
+    Description: "The name of the KMS Key"
+    Value: !Sub "${environment}-${product}-${service}-kmsKey"
+    Export:
+      Name: !Sub "${AWS::StackName}-KMSKeyName"

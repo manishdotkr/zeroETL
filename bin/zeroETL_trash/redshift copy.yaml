@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  environment:
+    Type: String
+    AllowedValues:
+      - stage
+    Default: stage
+  product:
+    Type: String
+    AllowedValues:
+      - rivittv
+      - extv
+    Default: extv
+  service:
+    Type: String
+    Default: redshift
+  DatabaseName:
+    Description: Redshift cluster database name
+    Type: String
+    AllowedPattern: "([a-z]|[0-9])+"
+    Default: dev
+  NumberOfNodes:
+    Description: The number of compute nodes in the cluster. For multi-node clusters,
+      the NumberOfNodes parameter must be greater than 1
+    Type: Number
+    Default: 2
+  NodeType:
+    Description: The type of node to be provisioned
+    Type: String
+    Default: ra3.xlplus
+  InboundTraffic:
+    Description: Allow inbound traffic to the cluster from this CIDR range.
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 10.96.0.0/16
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
+  masterUserName:
+    Description: The user name that is associated with the master user account for
+      the cluster that is being created
+    Type: String
+    Default: awsuser
+  ClusterType:
+    Description: The type of cluster
+    Type: String
+    Default: single-node
+    AllowedValues:
+    - single-node
+    - multi-node
+  PortNumber:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: Number
+    Default: '5439'
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group
+      SecurityGroupIngress:
+      - CidrIp: !Ref InboundTraffic
+        FromPort: !Ref PortNumber
+        ToPort: !Ref PortNumber
+        IpProtocol: tcp
+      VpcId: vpc-0e5f998e37e20d07f
+  RedshiftClusterSubnetGroup:
+    Type: AWS::Redshift::ClusterSubnetGroup
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds: 
+        - subnet-0d66b46bd82cb491c
+  RedshiftClusterParameterGroup:
+    Type: AWS::Redshift::ClusterParameterGroup
+    Properties:
+      Description: Cluster parameter group
+      ParameterGroupFamily: redshift-1.0
+      Parameters:
+      - ParameterName: enable_case_sensitive_identifier
+        ParameterValue: true
+  RedshiftCluster:
+    Type: AWS::Redshift::Cluster
+    Properties:
+      NumberOfNodes: !Ref NumberOfNodes
+      NodeType: !Ref NodeType
+      DBName: !Ref DatabaseName
+      MasterUsername: !Ref masterUserName
+      MasterPasswordSecretKmsKeyId: 855e8801-2f90-42b0-8cc5-3411553778b9
+      ClusterType: !Ref ClusterType
+      VpcSecurityGroupIds: 
+        - !Ref SecurityGroup
+      ClusterSubnetGroupName: !Ref RedshiftClusterSubnetGroup
+Outputs:
+  ClusterEndpoint:
+    Description: Cluster endpoint
+    Value: !Sub "${RedshiftCluster.Endpoint.Address}:${RedshiftCluster.Endpoint.Port}"
+  ClusterName:
+    Description: Name of cluster
+    Value: !Ref RedshiftCluster
+  ParameterGroupName:
+    Description: Name of parameter group
+    Value: !Ref RedshiftClusterParameterGroup
+  RedshiftClusterSubnetGroupName:
+    Description: Name of cluster subnet group
+    Value: !Ref RedshiftClusterSubnetGroup
+  RedshiftClusterSecurityGroupName:
+    Description: Name of cluster security group
+    Value: !Ref SecurityGroup
