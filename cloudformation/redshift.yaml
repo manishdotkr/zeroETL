@@ -9,7 +9,7 @@ Parameters:
   databaseName:
     Description: Redshift cluster database name
     Type: String
-    AllowedPattern: ([a-z]|[0-9])+
+    AllowedPattern: "([a-z]|[0-9])+"
     Default: dev
   nodeType:
     Description: The type of node to be provisioned
@@ -24,8 +24,8 @@ Parameters:
     Description: The type of cluster
     Type: String
     AllowedValues:
-      - single-node
-      - multi-node
+    - single-node
+    - multi-node
     Default: single-node
   integrationName:
     Description: Integration Name for the zero ETL integration
@@ -33,86 +33,75 @@ Parameters:
     Default: aurora-redshift-integration
 Resources:
   kmsKey:
-    Type: AWS::KMS::Key
+    Type: 'AWS::KMS::Key'
     Properties:
-      Description: KMS Key for Redshift Cluster
+      Description: 'KMS Key for Redshift Cluster'
       KeyPolicy:
         Version: '2012-10-17'
-        Id: key-consolepolicy-3
+        Id: 'key-consolepolicy-3'
         Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
+          - Sid: 'Enable IAM User Permissions'
+            Effect: 'Allow'
             Principal:
-              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
-            Action: kms:*
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
             Resource: '*'
-          - Sid: Allow access for Key Administrators
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b
-            Action:
-              - kms:Create*
-              - kms:Describe*
-              - kms:Enable*
-              - kms:List*
-              - kms:Put*
-              - kms:Update*
-              - kms:Revoke*
-              - kms:Disable*
-              - kms:Get*
-              - kms:Delete*
-              - kms:TagResource
-              - kms:UntagResource
-              - kms:ScheduleKeyDeletion
-              - kms:CancelKeyDeletion
-            Resource: '*'
-          - Sid: Allow use of the key
-            Effect: Allow
+          - Sid: 'Allow access for Key Administrators'
+            Effect: 'Allow'
             Principal:
               AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c'
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b'
             Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-              - kms:CreateGrant
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:TagResource'
+              - 'kms:UntagResource'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
             Resource: '*'
-          - Sid: Allow attachment of persistent resources
-            Effect: Allow
+          - Sid: 'Allow use of the key'
+            Effect: 'Allow'
             Principal:
+              Service: 'redshift.amazonaws.com'
               AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c
-                - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-admins_8e22ce54c2cfe08c'
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-reserved/sso.amazonaws.com/${AWS::Region}/AWSReservedSSO_rivittv-aws-sso-dev-admins_f55ab7ddcfb5ef3b'
             Action:
-              - kms:CreateGrant
-              - kms:ListGrants
-              - kms:RevokeGrant
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+              - 'kms:CreateGrant'
+              - 'kms:ListGrants'
+              - 'kms:RevokeGrant'
             Resource: '*'
-            Condition:
-              Bool:
-                kms:GrantIsForAWSResource: 'true'
-
+    
   kmsAlias:
-    Type: AWS::KMS::Alias
+    Type: 'AWS::KMS::Alias'
     Properties:
-      AliasName: !Sub alias/${environment}-${product}-${service}-kmsKey
+      AliasName: !Sub "alias/${environment}-${product}-${service}-kmsKey"
       TargetKeyId: !Ref kmsKey
 
   redshiftClusterSubnetGroup:
     Type: AWS::Redshift::ClusterSubnetGroup
     Properties:
       Description: Cluster subnet group
-      SubnetIds:
-        - !ImportValue
-          Fn::Sub: ${environment}-${product}-vpc-public-subnet-a
+      SubnetIds: 
+        - !ImportValue 
+          'Fn::Sub': '${environment}-${product}-vpc-public-subnet-a'
       Tags:
-        - Key: Name
-          Value: !Sub ${environment}-${product}-${service}-subnetgroup
+      - Key: "Name"
+        Value: !Sub ${environment}-${product}-${service}-subnetgroup	
 
   redshiftClusterParameterGroup:
     Type: AWS::Redshift::ClusterParameterGroup
@@ -121,8 +110,8 @@ Resources:
       ParameterGroupFamily: redshift-1.0
       ParameterGroupName: !Sub ${environment}-${product}-${service}-parametergroup
       Parameters:
-        - ParameterName: enable_case_sensitive_identifier
-          ParameterValue: true
+      - ParameterName: enable_case_sensitive_identifier
+        ParameterValue: true
 
   redshiftCluster:
     Type: AWS::Redshift::Cluster
@@ -137,22 +126,44 @@ Resources:
       ManageMasterPassword: true
       MasterPasswordSecretKmsKeyId: !Ref kmsKey
       KmsKeyId: !Ref kmsKey
-      VpcSecurityGroupIds:
-        - !ImportValue
-          Fn::Sub: ${environment}-${product}-vpc-generalSG
+      VpcSecurityGroupIds: 
+        - !ImportValue 
+          'Fn::Sub': '${environment}-${product}-vpc-generalSG'
       ClusterSubnetGroupName: !Ref redshiftClusterSubnetGroup
+      NamespaceResourcePolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: redshift.amazonaws.com
+            Action: 'redshift:AuthorizeInboundIntegration'
+            Condition:
+              StringEquals:
+                'aws:SourceArn': !ImportValue
+                  'Fn::Sub': '${environment}-${product}-aurora-arn'
+          - Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ':'
+                - - arn
+                  - !Ref 'AWS::Partition'
+                  - iam
+                  - ''
+                  - !Ref 'AWS::AccountId'
+                  - root
+            Action: 'redshift:CreateInboundIntegration'
 
   zeroEtlIntegration:
     Type: Custom::ZeroETL
     Properties:
-      ServiceToken: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${environment}-${product}-zeroEtl-lambda
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${environment}-${product}-zeroEtl-lambda'
       TargetIdentifier: !Ref redshiftCluster
       TargetArn: !GetAtt redshiftCluster.ClusterNamespaceArn
       Integrations:
         - SourceIdentifier: !ImportValue
-            Fn::Sub: ${environment}-${product}-aurora-identifier
+            'Fn::Sub': '${environment}-${product}-aurora-identifier'
           SourceArn: !ImportValue
-            Fn::Sub: ${environment}-${product}-aurora-arn
+            'Fn::Sub': '${environment}-${product}-aurora-arn'
           IntegrationName: !Ref integrationName
     DependsOn: redshiftCluster
 
@@ -171,7 +182,7 @@ Outputs:
     Description: The Identifier of Redshift Cluster Subnet Group
     Value: !Ref redshiftClusterSubnetGroup
     Export:
-      Name: !Sub ${environment}-${product}-${service}-subnetgroup
+      Name: !Sub ${environment}-${product}-${service}-subnetgroup	
   kmsKey:
     Description: The Identifier of KMS Key
     Value: !Ref kmsKey

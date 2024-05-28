@@ -32,7 +32,6 @@ def lambda_handler(event, context):
                 print(f"sourceClusterIdentifier: {sourceClusterIdentifier}")
                 print(f"sourceClusterArn: {sourceClusterArn}")
             
-                targetClusterVerifier(sourceClusterArn=sourceClusterArn, targetClusterArn=targetClusterArn)
                 waitForClusterAvailability(sourceClusterName=sourceClusterIdentifier , targetClusterName=targetClusterIdentifier, noOfTry=1)
                 createIntegration(sourceClusterArn=sourceClusterArn, targetClusterArn=targetClusterArn, redshiftIntegrationName=redshiftIntegrationName)
                 print(f"Zero ETL Integration Created Successfully with Name: {redshiftIntegrationName}")
@@ -78,7 +77,6 @@ def lambda_handler(event, context):
                 print(f"sourceClusterIdentifier: {sourceClusterIdentifier}")
                 print(f"sourceClusterArn: {sourceClusterArn}")
 
-                targetClusterVerifier(sourceClusterArn=sourceClusterArn, targetClusterArn=targetClusterArn)
                 waitForClusterAvailability(sourceClusterName=sourceClusterIdentifier , targetClusterName=targetClusterIdentifier, noOfTry=1)
                 createIntegration(sourceClusterArn=sourceClusterArn, targetClusterArn=targetClusterArn, redshiftIntegrationName=redshiftIntegrationName)
                 print(f"Zero ETL Integration Created Successfully with Name: {redshiftIntegrationName}")
@@ -144,36 +142,6 @@ def createIntegration(sourceClusterArn, targetClusterArn, redshiftIntegrationNam
     integrationID = response['IntegrationArn'].split(':')[-1]
     print(f"Zero ETL Integration Created with Integration ID : {integrationID}")
     return response
-
-def targetClusterVerifier(sourceClusterArn, targetClusterArn):
-    # Create a resource policy specifying cluster ARN and account ID
-    response = sts.get_caller_identity()
-    account_id = response['Account']
-    response = redshift.put_resource_policy(
-        ResourceArn=targetClusterArn,
-        Policy='''
-        {
-            \"Version\":\"2012-10-17\",
-            \"Statement\":[
-                {\"Effect\":\"Allow\",
-                \"Principal\":{
-                    \"Service\":\"redshift.amazonaws.com\"
-                },
-                \"Action\":[\"redshift:AuthorizeInboundIntegration\"],
-                \"Condition\":{
-                    \"StringEquals\":{
-                        \"aws:SourceArn\":\"%s\"}
-                    }
-                },
-                {\"Effect\":\"Allow\",
-                \"Principal\":{
-                    \"AWS\":\"arn:aws:iam::%s:root\"},
-                \"Action\":\"redshift:CreateInboundIntegration\"}
-            ]
-        }
-        ''' % (sourceClusterArn, account_id)
-    )
-    return(response)
 
 def waitForClusterAvailability(sourceClusterName , targetClusterName, noOfTry):
     """Waits for both clusters to be available"""
