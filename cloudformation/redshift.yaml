@@ -85,7 +85,7 @@ Resources:
               - 'kms:ListGrants'
               - 'kms:RevokeGrant'
             Resource: '*'
-    
+        
   kmsAlias:
     Type: 'AWS::KMS::Alias'
     Properties:
@@ -154,18 +154,13 @@ Resources:
             Action: 'redshift:CreateInboundIntegration'
 
   zeroEtlIntegration:
-    Type: Custom::ZeroETL
+    Type: AWS::RDS::Integration
     Properties:
-      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${environment}-${product}-zeroEtl-lambda'
-      TargetIdentifier: !Ref redshiftCluster
+      IntegrationName: !Ref integrationName
+      KMSKeyId: !GetAtt kmsKey.Arn
+      SourceArn: !ImportValue
+        Fn::Sub: ${environment}-${product}-aurora-arn
       TargetArn: !GetAtt redshiftCluster.ClusterNamespaceArn
-      Integrations:
-        - SourceIdentifier: !ImportValue
-            'Fn::Sub': '${environment}-${product}-aurora-identifier'
-          SourceArn: !ImportValue
-            'Fn::Sub': '${environment}-${product}-aurora-arn'
-          IntegrationName: !Ref integrationName
-    DependsOn: redshiftCluster
 
 Outputs:
   redshiftCluster:
@@ -188,3 +183,8 @@ Outputs:
     Value: !Ref kmsKey
     Export:
       Name: !Sub ${environment}-${product}-${service}-kmsKey
+  zeroEtlIntegration:
+    Description: The Identifier of KMS Key
+    Value: !Ref zeroEtlIntegration
+    Export:
+      Name: !Sub ${environment}-${product}-${service}-zeroEtlIntegration
