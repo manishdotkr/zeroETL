@@ -25,7 +25,7 @@ This CloudFormation template (`redsfhift.yaml`) automates the creation of a Reds
 - **redshiftClusterSubnetGroup**: Subnet group for Redshift cluster.
 - **redshiftClusterParameterGroup**: Parameter group for Redshift cluster.
 - **redshiftCluster**: Redshift cluster creation.
-- **zeroEtlIntegration**: Custom resource for zero ETL integration.
+- **zeroEtlIntegration**: RDS integration resource.
 
 ### Outputs:
 
@@ -34,9 +34,10 @@ This CloudFormation template (`redsfhift.yaml`) automates the creation of a Reds
 - **redshiftClusterSubnetGroup**: Identifier of Redshift Cluster Subnet Group.
 - **kmsKey**: Identifier of KMS Key.
 
-## Lambda Function:
+## Reference:
 
-The included Lambda function (`lambda.py`) orchestrates the creation and deletion of zero ETL integration. It waits for clusters to be available, creates integration, and handles delete requests.
+- [AWS::RDS::Integration](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-integration.html)
+- []()
 
 ---
 
