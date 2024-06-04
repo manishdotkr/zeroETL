@@ -1,0 +1,29 @@
+1. Create Redshift
+	-> Put Cluster Identifier name
+	-> choose node type as ra3.xlplus
+	-> select number of nodes as 1 or 2 as requied
+	-- Database configurations --
+	-> Put admin username
+	-> in dmin password select -> Manage admin credentials in AWS Secrets Manager
+		-> check Customize encryption settings (advanced)
+		-> add kms key -> stage-extv-redshift-kms
+	-- Associated IAM roles --
+	-> click on "Associated IAM role"
+	-> check AWSServiceRoleForRedshift
+
+	-- uncheck Additional configurations --
+	-- (optional) Network and security --
+	-> add required vpc or leave on default
+	-- Database configurations --
+	-> add "stage-extv-testredshift-parametergroup" in Parameter groups
+	-> ** select Use AWS Key Management Service (AWS KMS)
+	-> in AWS KMS
+		-> choose "stage-extv-redshift-kms"
+
+2. also need to add 
+	-> Authorized principals -> arn:aws:iam::095767269209:root
+	-> Authorized integration sources -> arn:aws:rds:us-west-2:095767269209:cluster:stage-extv-testauroradb3-cluster
+
+3. Create zero etl integration after that
+
+4. need to add database in zero etl integration
